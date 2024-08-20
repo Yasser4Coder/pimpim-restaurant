@@ -1,63 +1,39 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../../api/axios";
-import classes from "../gallery.module.css";
-
-import { IoMdClose } from "react-icons/io";
 
 const TheGallery = () => {
-  const [images, setImages] = useState([""]);
-  const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    setLoading(true);
     const fetchImages = async () => {
       try {
         const response = await axios.get("img/images");
         setImages(response.data);
-        setLoading(false);
-        console.log();
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchImages();
   }, []);
 
-  const [model, setModel] = useState(false);
-  const [tempimgSrc, setTempImgSrc] = useState("");
-  const getImg = (imgSrc) => {
-    setTempImgSrc(imgSrc);
-    setModel(true);
-  };
+  if (loading) return <div className="text-white">Loading...</div>;
+
   return (
-    <>
-      <div className={model ? classes.modelOpen : classes.model}>
-        <img src={tempimgSrc} className={classes.image} alt="" />
-        <IoMdClose
-          onClick={() => setModel(false)}
-          className=" fixed top-[10px] right-[10px] w-[2rem] h-[2rem] p-[5px] text-white cursor-pointer"
-        />
-      </div>
-      <div className={classes.gallery}>
-        {loading === true ? (
-          <div className="w-[20px] h-[200px]">
-            <div class="loader"></div>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {images &&
+        images.map((image) => (
+          <div>
+            <img
+              class="h-auto max-w-full rounded-lg"
+              src={image.imageUrl}
+              alt=""
+            />
           </div>
-        ) : (
-          images &&
-          images.map((item) => {
-            return (
-              <div
-                className={classes.pics}
-                key={item._id}
-                onClick={() => getImg(item.imageUrl)}
-              >
-                <img src={item.imageUrl} style={{ width: "100%" }} alt="" />
-              </div>
-            );
-          })
-        )}
-      </div>
-    </>
+        ))}
+    </div>
   );
 };
 
