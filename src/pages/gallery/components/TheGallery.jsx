@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "../../../api/axios";
+import classes from "../gallery.module.css";
 
 import { IoMdClose } from "react-icons/io";
 
@@ -29,14 +30,14 @@ const TheGallery = () => {
   };
   return (
     <>
-      <div className={model ? "model open" : "model"}>
-        <img src={tempimgSrc} className="image" alt="" />
+      <div className={model ? classes.modelOpen : classes.model}>
+        <img src={tempimgSrc} className={classes.image} alt="" />
         <IoMdClose
           onClick={() => setModel(false)}
           className=" fixed top-[10px] right-[10px] w-[2rem] h-[2rem] p-[5px] text-white cursor-pointer"
         />
       </div>
-      <div className="gallery">
+      <div className={classes.gallery}>
         {loading === true ? (
           <div className="w-[20px] h-[200px]">
             <div class="loader"></div>
@@ -46,7 +47,7 @@ const TheGallery = () => {
           images.map((item) => {
             return (
               <div
-                className="pics"
+                className={classes.pics}
                 key={item._id}
                 onClick={() => getImg(item.imageUrl)}
               >

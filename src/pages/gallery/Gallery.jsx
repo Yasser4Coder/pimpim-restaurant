@@ -1,6 +1,5 @@
 import React from "react";
 import TheGallery from "./components/TheGallery";
-import "./gallery.css";
 
 const Gallery = () => {
   return (
