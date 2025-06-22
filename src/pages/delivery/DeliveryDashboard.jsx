@@ -6,35 +6,38 @@ import socket from "../../services/socket";
 import { useNavigate } from "react-router-dom";
 import logo from "../../images/306930671_3283853568599185_1930342004374579919_n-removebg-preview.png";
 
-function parseJwt(token) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch (e) {
-    return null;
-  }
-}
-
 const DeliveryDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fullName, setFullName] = useState("");
+  const [deliveryGuyId, setDeliveryGuyId] = useState("");
 
-  const token = localStorage.getItem("token");
-  const user = token ? parseJwt(token) : null;
-  const deliveryGuyId = user?.id;
-  const fullName = user?.fullName;
   const navigate = useNavigate();
 
+  // Fetch delivery guy info on mount
   useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get("/users/me");
+        setFullName(res.data.fullName);
+        setDeliveryGuyId(res.data.id);
+      } catch (err) {
+        setFullName("");
+        setDeliveryGuyId("");
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (!deliveryGuyId) return;
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("/orders");
-        // Filter orders assigned to this delivery guy
-        const assigned = res.data.filter(
-          (order) => order.deliveryGuy && order.deliveryGuy.id === deliveryGuyId
-        );
-        setOrders(assigned);
+        // Fetch only orders assigned to this delivery guy
+        const res = await axios.get("/orders/my-orders");
+        setOrders(res.data);
       } catch (err) {
         setError("Failed to load orders");
       } finally {
@@ -93,7 +96,8 @@ const DeliveryDashboard = () => {
     (sum, order) => sum + (order.total || 0),
     0
   );
-  const deliveredProfit = deliveredCount * 100;
+  // Update profit to 200 DA per delivery
+  const deliveredProfit = deliveredCount * 200;
 
   if (loading)
     return (

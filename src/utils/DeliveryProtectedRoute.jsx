@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "../api/axios";
 
 const DeliveryProtectedRoute = () => {
-  const [auth, setAuth] = useState(null); // null = loading, false = not auth, true = auth
+  const [auth, setAuth] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -25,8 +25,8 @@ const DeliveryProtectedRoute = () => {
     };
   }, []);
 
-  if (auth === null) return null; // or a loading spinner
-  return auth ? <Outlet /> : <Navigate to="/login" />;
+  if (auth === null) return <div>Loading...</div>;
+  return auth ? <Outlet /> : <Navigate to="/delivery/login" />;
 };
 
 export default DeliveryProtectedRoute;
