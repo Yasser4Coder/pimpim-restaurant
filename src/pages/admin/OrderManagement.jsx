@@ -89,7 +89,7 @@ const OrderManagement = () => {
     return () => {
       socket.off("newOrder", handleNewOrder);
       socket.off("orderUpdated", handleOrderUpdated);
-      socket.disconnect();
+      // socket.disconnect(); // Do not disconnect socket on unmount
     };
   }, []);
 

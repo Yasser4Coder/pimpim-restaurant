@@ -12,6 +12,7 @@ const DeliveryDashboard = () => {
   const [error, setError] = useState(null);
   const [fullName, setFullName] = useState("");
   const [deliveryGuyId, setDeliveryGuyId] = useState("");
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const navigate = useNavigate();
 
@@ -70,6 +71,7 @@ const DeliveryDashboard = () => {
   }, [deliveryGuyId]);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
+    setUpdatingOrderId(orderId);
     try {
       await axios.put(`/orders/${orderId}/status`, { status: newStatus });
       setOrders((prev) =>
@@ -79,6 +81,8 @@ const DeliveryDashboard = () => {
       );
     } catch (err) {
       alert("Failed to update status");
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -246,8 +250,16 @@ const DeliveryDashboard = () => {
                       size="lg"
                       className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold"
                       onClick={() => handleStatusUpdate(order.id, "Delivered")}
+                      disabled={updatingOrderId === order.id}
                     >
-                      Mark as Delivered
+                      {updatingOrderId === order.id ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="loader border-white border-t-2 border-b-2 w-4 h-4 rounded-full animate-spin"></span>
+                          Delivering...
+                        </span>
+                      ) : (
+                        "Mark as Delivered"
+                      )}
                     </Button>
                   )}
                   {order.status === "Ready" && (
