@@ -10,24 +10,20 @@ const cartSlice = createSlice({
         id: action.payload.id,
         name: action.payload.name,
         price: action.payload.price,
-        favorite: action.payload.favorite,
-        descreption: action.payload.descreption,
-        stars: action.payload.stars,
-        imageUrl: action.payload.imageUrl,
-        count: 1,
-        totalPrice: action.payload.price,
+        description: action.payload.description,
+        rating: action.payload.rating,
+        image: action.payload.image,
+        category: action.payload.category,
+        count: action.payload.quantity || 1,
+        totalPrice: action.payload.totalPrice || action.payload.price,
       };
-      let found = false;
 
-      state.forEach((element) => {
-        if (element.id === newCart.id) {
-          element.count += 1;
-          element.totalPrice += element.price;
-          found = true;
-        }
-      });
+      const existingItem = state.find((item) => item.id === newCart.id);
 
-      if (!found) {
+      if (existingItem) {
+        existingItem.count += newCart.count;
+        existingItem.totalPrice = existingItem.count * existingItem.price;
+      } else {
         state.push(newCart);
       }
     },
@@ -35,14 +31,29 @@ const cartSlice = createSlice({
       return state.filter((item) => item.id !== action.payload.id);
     },
     increCount: (state, action) => {
-      return state.forEach((element) => {
-        if (element.id === action.payload.id) {
-          element.count = action.payload.count;
-          element.totalPrice = action.payload.count * element.price;
-        }
-      });
+      const item = state.find((element) => element.id === action.payload.id);
+      if (item) {
+        item.count = action.payload.count;
+        item.totalPrice = action.payload.count * item.price;
+      }
+    },
+    decrementCount: (state, action) => {
+      const item = state.find((element) => element.id === action.payload.id);
+      if (item && item.count > 1) {
+        item.count -= 1;
+        item.totalPrice = item.count * item.price;
+      }
+    },
+    clearCart: (state) => {
+      return [];
     },
   },
 });
-export const { addToCart, removeFromCart, increCount } = cartSlice.actions;
+export const {
+  addToCart,
+  removeFromCart,
+  increCount,
+  decrementCount,
+  clearCart,
+} = cartSlice.actions;
 export default cartSlice.reducer;

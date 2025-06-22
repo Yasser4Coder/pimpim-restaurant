@@ -22,35 +22,75 @@ const reducer = (state, action) => {
       return state;
   }
 };
+
 const Menu = () => {
   const [state, dispatch] = useReducer(reducer, initialstate);
   const { foods, tags } = state;
   const { searchTerm, tag } = useParams();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadTags = getAllTags();
-    setLoading(true);
-    loadTags.then((tags) => dispatch({ type: "TAGS_LOADED", payload: tags }));
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
 
-    const loadFoods = searchTerm
-      ? search(searchTerm)
-      : tag
-      ? filterByTag(tag)
-      : getall();
+      try {
+        // Load categories
+        const categoriesData = await getAllTags();
+        dispatch({ type: "TAGS_LOADED", payload: categoriesData });
 
-    loadFoods.then((foods) =>
-      dispatch({ type: "FOODS_LOADED", payload: foods })
-    );
-    setLoading(false);
+        // Load foods based on search/filter
+        let foodsData;
+        if (searchTerm) {
+          foodsData = await search(searchTerm);
+        } else if (tag) {
+          foodsData = await filterByTag(tag);
+        } else {
+          foodsData = await getall();
+        }
+
+        dispatch({ type: "FOODS_LOADED", payload: foodsData });
+      } catch (err) {
+        console.error("Error loading menu data:", err);
+        setError(
+          "Échec du chargement des articles du menu. Veuillez réessayer plus tard."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, [searchTerm, tag]);
+
   return (
     <div className="min pb-[40px] bg-slate-500">
       <Search />
       <Tags tags={tags} />
-      {loading === true ? (
-        <div className="flex items-center justify-center">
-          <div class="loader"></div>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="loader"></div>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-red-500 text-center">
+            <p className="text-lg font-semibold mb-2">Erreur</p>
+            <p>{error}</p>
+          </div>
+        </div>
+      ) : foods.length === 0 ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-gray-500 text-center">
+            <p className="text-lg font-semibold mb-2">Aucun article trouvé</p>
+            <p>
+              {searchTerm
+                ? `Aucun article du menu trouvé pour "${searchTerm}"`
+                : tag
+                ? `Aucun article trouvé dans la catégorie "${tag}"`
+                : "Aucun article du menu disponible pour le moment"}
+            </p>
+          </div>
         </div>
       ) : (
         <Thumbnails foods={foods} />

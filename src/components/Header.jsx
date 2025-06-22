@@ -1,23 +1,40 @@
-import img from "../images/306930671_3283853568599185_1930342004374579919_n-removebg-preview.png";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaCartShopping } from "react-icons/fa6";
+import { FaCartShopping, FaUser } from "react-icons/fa6";
 import { MdRestaurant } from "react-icons/md";
-import { useState } from "react";
 import { MdRestaurantMenu } from "react-icons/md";
 import { useSelector } from "react-redux";
-import { useAuth } from "@clerk/clerk-react";
-
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  UserButton,
-} from "@clerk/clerk-react";
+import settingsApi from "../api/settingsApi";
+import img from "../images/306930671_3283853568599185_1930342004374579919_n-removebg-preview.png";
 
 const Header = () => {
   const [toogle, setToggle] = useState(false);
+  const [restaurantSettings, setRestaurantSettings] = useState({
+    name: "PimPim",
+    logo: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const count = useSelector((state) => state.cart);
-  const { orgRole } = useAuth();
+
+  // Fetch restaurant settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await settingsApi.get();
+        setRestaurantSettings({
+          name: response.data.name || "PimPim",
+          logo: response.data.logo || "",
+        });
+      } catch (error) {
+        console.error("Failed to fetch restaurant settings:", error);
+        // Keep default values if fetch fails
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
 
   const handleClick = () => {
     setToggle(!toogle);
@@ -29,13 +46,35 @@ const Header = () => {
   const cart = {
     totalecount: totalCount,
   };
+
   return (
     <header className="pt-[20px] pb-[20px] bg-zinc-900">
       <div className="flex text-white mx-auto bg-zinc-900 container text-lg items-center justify-between">
         <div className="logo flex items-center gap-[10px]">
-          <img width={60} height={60} src={img} alt="logo" />
+          {isLoading ? (
+            // Loading state
+            <div className="w-[60px] h-[60px] bg-gray-600 rounded-full animate-pulse"></div>
+          ) : restaurantSettings.logo ? (
+            // Custom logo from settings
+            <img
+              width={60}
+              height={60}
+              src={restaurantSettings.logo}
+              alt={`${restaurantSettings.name} logo`}
+              className="rounded-full object-cover"
+            />
+          ) : (
+            // Default logo
+            <img
+              width={60}
+              height={60}
+              src={img}
+              alt="logo"
+              className="rounded-full object-cover"
+            />
+          )}
           <Link className="text-xl font-bold" to="/">
-            PimPim
+            {isLoading ? "Loading..." : restaurantSettings.name}
           </Link>
         </div>
         <div className="links hidden lg:flex items-center gap-[20px]">
@@ -43,18 +82,9 @@ const Header = () => {
           <Link to="/aboutus">A propre de nous</Link>
           <Link to="/menu">Menu</Link>
           <Link to="/gallery">Galerie</Link>
-          {orgRole === "org:admin" ? <Link to="/admin">admin</Link> : ""}
+          <Link to="/track">Suivre Commande</Link>
         </div>
         <div className="login-menu hidden lg:flex items-center gap-[20px]">
-          <div>
-            <SignedOut>
-              <SignInButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </div>
-          <div className="w-[1px] h-[25px] bg-slate-200"></div>
           <Link to="/cart" className="cart relative">
             <FaCartShopping className="text-3xl cursor-pointer" />
             {cart.totalecount !== 0 ? (
@@ -64,6 +94,9 @@ const Header = () => {
             ) : (
               ""
             )}
+          </Link>
+          <Link to="/login" className="flex items-center justify-center">
+            <FaUser className="text-2xl cursor-pointer" title="Login" />
           </Link>
         </div>
         <div onClick={handleClick} className="MobileNav lg:hidden">
@@ -88,22 +121,9 @@ const Header = () => {
               <Link onClick={handleClick} to="/gallery">
                 Galerie
               </Link>
-              {orgRole === "org:admin" ? (
-                <Link onClick={handleClick} to="/admin">
-                  admin
-                </Link>
-              ) : (
-                ""
-              )}
-              <div>
-                <SignedOut>
-                  <SignInButton />
-                </SignedOut>
-                <SignedIn>
-                  <UserButton />
-                </SignedIn>
-              </div>
-
+              <Link onClick={handleClick} to="/track">
+                Suivre Commande
+              </Link>
               <Link to="/cart" onClick={handleClick} className=" relative">
                 <FaCartShopping className="text-3xl" />
                 {cart.totalecount !== 0 ? (
@@ -113,6 +133,13 @@ const Header = () => {
                 ) : (
                   ""
                 )}
+              </Link>
+              <Link
+                onClick={handleClick}
+                to="/login"
+                className="flex items-center justify-center"
+              >
+                <FaUser className="text-2xl" title="Login" />
               </Link>
             </div>
           </div>

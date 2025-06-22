@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import img from "../../../images/Snapinsta.app_448116302_7576420729111064_2506789993271330359_n_1024.jpg";
 import img1 from "../../../images/Snapinsta.app_447767950_25643712418609308_4327164228410308211_n_1024.jpg";
@@ -10,19 +10,82 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { Pagination, Navigation } from "swiper/modules";
 import classes from "./swiper1.module.css";
+import settingsApi from "../../../api/settingsApi";
 
 const FirstSection = () => {
+  const [heroSettings, setHeroSettings] = useState({
+    title: "Découvrez l'Art de la Gastronomie",
+    subtitle: "Bienvenue chez PimPim Restaurant",
+    description: "Où la Gastronomie Rencontre la Passion",
+    images: [img, img1, img2], // Default images
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch hero section settings
+  useEffect(() => {
+    const fetchHeroSettings = async () => {
+      try {
+        const response = await settingsApi.get();
+        const settings = response.data;
+
+        setHeroSettings({
+          title: settings.landingPage?.heroSection?.title,
+          subtitle:
+            settings.landingPage?.heroSection?.subtitle ||
+            "Bienvenue chez PimPim Restaurant",
+          description:
+            settings.landingPage?.heroSection?.description ||
+            "Où la Gastronomie Rencontre la Passion",
+          images:
+            settings.landingPage?.heroSection?.images?.length > 0
+              ? settings.landingPage.heroSection.images
+              : [img, img1, img2], // Fallback to default images
+        });
+      } catch (error) {
+        console.error("Failed to fetch hero settings:", error);
+        // Keep default values if fetch fails
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchHeroSettings();
+  }, []);
+
   return (
     <div className="min min-h-screen">
       <div className=" container mx-auto min-h-screen flex items-center py-10">
         <div className="container mx-auto flex flex-col-reverse xl:flex-row items-center justify-between w-full px-4 xl:px-0 text-white">
           <div className="content flex flex-col gap-8 mt-8 xl:mt-0 text-center xl:text-left">
             <h1 className="text-3xl md:text-4xl xl:text-[60px] xl:leading-[60px] font-bold">
-              Découvrez l'Art <br /> de la Gastronomie
+              {isLoading ? (
+                <div className="animate-pulse">
+                  <div className="h-12 md:h-16 xl:h-[60px] bg-gray-600 rounded mb-2"></div>
+                  <div className="h-12 md:h-16 xl:h-[60px] bg-gray-600 rounded"></div>
+                </div>
+              ) : (
+                <>
+                  {heroSettings.title.split("<br />").map((line, index) => (
+                    <React.Fragment key={index}>
+                      {line}
+                      {index <
+                        heroSettings.title.split("<br />").length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </>
+              )}
             </h1>
             <p className="text-base md:text-lg">
-              Bienvenue chez PimPim Restaurant, <br /> Où la Gastronomie
-              Rencontre la Passion
+              {isLoading ? (
+                <div className="animate-pulse">
+                  <div className="h-4 md:h-5 bg-gray-600 rounded mb-2"></div>
+                  <div className="h-4 md:h-5 bg-gray-600 rounded"></div>
+                </div>
+              ) : (
+                <>
+                  {heroSettings.subtitle} <br /> {heroSettings.description}
+                </>
+              )}
             </p>
             <div className="flex justify-center xl:justify-start">
               <Link
@@ -39,47 +102,39 @@ const FirstSection = () => {
               </div>
             </div>
           </div>
-          <div className="image relative bg-slate-500 w-full max-w-[563px] mx-auto xl:mx-0 mt-10 xl:mt-0">
-            <Swiper
-              className={classes.swiper}
-              style={{
-                "--swiper-pagination-color": "#FFBA08",
-                "--swiper-pagination-bullet-inactive-color": "#999999",
-                "--swiper-pagination-bullet-inactive-opacity": "1",
-                "--swiper-pagination-bullet-size": "16px",
-                "--swiper-pagination-bullet-horizontal-gap": "6px",
-              }}
-              slidesPerView={1}
-              spaceBetween={30}
-              loop={true}
-              pagination={{
-                clickable: true,
-              }}
-              navigation={true}
-              modules={[Pagination, Navigation]}
-            >
-              <SwiperSlide className={classes.swiperslide}>
-                <img
-                  src={img}
-                  alt="home_image"
-                  className={classes.swiperslideimg}
-                />
-              </SwiperSlide>
-              <SwiperSlide className={classes.swiperslide}>
-                <img
-                  src={img1}
-                  alt="home_image"
-                  className={classes.swiperslideimg}
-                />
-              </SwiperSlide>
-              <SwiperSlide className={classes.swiperslide}>
-                <img
-                  src={img2}
-                  alt="home_image"
-                  className={classes.swiperslideimg}
-                />
-              </SwiperSlide>
-            </Swiper>
+          <div className="image relative w-full max-w-[563px] mx-auto xl:mx-0 mt-10 xl:mt-0">
+            {isLoading ? (
+              <div className="w-full h-[434px] bg-gray-600 rounded-2xl animate-pulse"></div>
+            ) : (
+              <Swiper
+                className={classes.swiper}
+                style={{
+                  "--swiper-pagination-color": "#FFBA08",
+                  "--swiper-pagination-bullet-inactive-color": "#999999",
+                  "--swiper-pagination-bullet-inactive-opacity": "1",
+                  "--swiper-pagination-bullet-size": "16px",
+                  "--swiper-pagination-bullet-horizontal-gap": "6px",
+                }}
+                slidesPerView={1}
+                spaceBetween={30}
+                loop={true}
+                pagination={{
+                  clickable: true,
+                }}
+                navigation={true}
+                modules={[Pagination, Navigation]}
+              >
+                {heroSettings.images.map((image, index) => (
+                  <SwiperSlide key={index} className={classes.swiperslide}>
+                    <img
+                      src={image}
+                      alt={`hero_image_${index + 1}`}
+                      className={classes.swiperslideimg}
+                    />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
             <SiAkamai className="absolute top-[-49px] pimpim left-[-68px] text-[120px] hidden xl:block" />
           </div>
         </div>

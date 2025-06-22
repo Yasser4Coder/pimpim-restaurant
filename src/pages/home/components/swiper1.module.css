@@ -2,6 +2,7 @@
   width: 100%; /*563px */
   height: 100%; /* 434px */
   border: 1px yellow solid;
+  border-radius: 1rem;
 }
 
 .swiperslide {
@@ -12,6 +13,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 1rem;
 }
 
 .swiperslideimg {
@@ -19,9 +21,11 @@
   width: 563px;
   height: 434px;
   object-fit: cover;
+  border-radius: 1rem;
 }
 
 .swiper {
   margin-left: auto;
   margin-right: auto;
+  border-radius: 1rem;
 }

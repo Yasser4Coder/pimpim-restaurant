@@ -1,9 +1,21 @@
 import { Outlet, Navigate } from "react-router-dom";
-import { useAuth } from "@clerk/clerk-react";
+
+function parseJwt(token) {
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch (e) {
+    return null;
+  }
+}
 
 const ProtectedRoutes = () => {
-  const user = useAuth();
-  return user.orgRole === "org:admin" ? <Outlet /> : <Navigate to={"/"} />;
+  const token = localStorage.getItem("token");
+  const user = token ? parseJwt(token) : null;
+  if (user && user.role === 1012) {
+    return <Outlet />;
+  } else {
+    return <Navigate to="/login" />;
+  }
 };
 
 export default ProtectedRoutes;

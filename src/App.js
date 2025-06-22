@@ -1,22 +1,14 @@
 import AppRoutes from "./AppRoutes";
-import Footer from "./components/Footer";
-import Header from "./components/Header";
-import { ClerkProvider } from "@clerk/clerk-react";
-import StatusAd from "./components/StatusAd";
+import { Toaster } from "react-hot-toast";
 
 const PUBLISHABLE_KEY = process.env.REACT_APP_KEY;
 
+if (!PUBLISHABLE_KEY) {
+  throw new Error("Missing Publishable Key");
+}
+
 function App() {
-  return (
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <div className="App">
-        <StatusAd />
-        <Header />
-        <AppRoutes />
-        <Footer />
-      </div>
-    </ClerkProvider>
-  );
+  return <AppRoutes />;
 }
 
 export default App;
