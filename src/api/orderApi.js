@@ -25,6 +25,12 @@ const orderApi = {
 
   // Get order statistics
   getStats: () => api.get("/orders/stats/overview"),
+
+  // Delete all orders
+  deleteAll: () => api.delete("/orders/all"),
+
+  // Get business progress stats
+  getProgress: () => api.get("/orders/progress"),
 };
 
 export default orderApi;

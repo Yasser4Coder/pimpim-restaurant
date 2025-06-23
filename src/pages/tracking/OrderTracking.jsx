@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi";
 import socket from "../../services/socket";
+import settingsApi from "../../api/settingsApi";
 import {
   FaArrowLeft,
   FaBox,
@@ -132,14 +133,9 @@ const OrderSearchForm = ({ onSearch, loading }) => {
       return "Le numéro de commande est requis";
     }
 
-    // Check if it contains only numbers
-    if (!/^\d+$/.test(cleanValue)) {
-      return "Le numéro de commande ne doit contenir que des chiffres";
-    }
-
-    // Check if it's a reasonable length (1-6 digits)
-    if (cleanValue.length < 1 || cleanValue.length > 6) {
-      return "Le numéro de commande doit contenir entre 1 et 6 chiffres";
+    // Check if it is 8 alphanumeric characters
+    if (!/^[A-Za-z0-9]{8}$/.test(cleanValue)) {
+      return "Le numéro de commande doit contenir 8 caractères alphanumériques";
     }
 
     return "";
@@ -183,7 +179,7 @@ const OrderSearchForm = ({ onSearch, loading }) => {
               type="text"
               value={orderNumber}
               onChange={handleInputChange}
-              placeholder="Entrez le numéro de commande (ex: #0001)"
+              placeholder="Entrez le numéro de commande (ex: ABCD1234)"
               className={`flex-1 px-3 md:px-4 py-2 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm text-sm md:text-base ${
                 inputError
                   ? "border-red-400 focus:ring-red-500"
@@ -227,7 +223,7 @@ const OrderSearchForm = ({ onSearch, loading }) => {
 };
 
 // Order Details Component
-const OrderDetails = ({ order, onClose }) => {
+const OrderDetails = ({ order, onClose, supportPhone }) => {
   // Don't render if order is null or undefined
   if (!order) {
     return null;
@@ -381,12 +377,18 @@ const OrderDetails = ({ order, onClose }) => {
           Si vous avez des questions concernant votre commande, n'hésitez pas à
           nous contacter :
         </p>
-        <a
-          href="tel:0666554488"
-          className="block text-white text-lg font-bold tracking-widest hover:text-blue-300 transition-colors duration-300"
-        >
-          📞 06 66 55 44 88
-        </a>
+        {supportPhone ? (
+          <a
+            href={`tel:${supportPhone}`}
+            className="block text-white text-lg font-bold tracking-widest hover:text-blue-300 transition-colors duration-300"
+          >
+            📞 {supportPhone}
+          </a>
+        ) : (
+          <span className="block text-white text-lg font-bold tracking-widest">
+            Numéro non disponible
+          </span>
+        )}
       </div>
     </div>
   );
@@ -399,6 +401,13 @@ const OrderTracking = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searched, setSearched] = useState(false);
+  const [supportPhone, setSupportPhone] = useState("");
+
+  useEffect(() => {
+    settingsApi.get().then((res) => {
+      setSupportPhone(res.data.contact?.supportPhone || "");
+    });
+  }, []);
 
   useEffect(() => {
     // Listen for real-time order updates
@@ -523,18 +532,28 @@ const OrderTracking = () => {
                   >
                     Nouvelle Recherche
                   </button>
-                  <a
-                    href="tel:0666554488"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center"
-                  >
-                    <FaPhone className="mr-2" />
-                    Nous Appeler
-                  </a>
+                  {supportPhone ? (
+                    <a
+                      href={`tel:${supportPhone}`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center"
+                    >
+                      <FaPhone className="mr-2" />
+                      Nous Appeler
+                    </a>
+                  ) : (
+                    <span className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center">
+                      Numéro non disponible
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           ) : (
-            <OrderDetails order={order} onClose={handleCloseOrder} />
+            <OrderDetails
+              order={order}
+              onClose={handleCloseOrder}
+              supportPhone={supportPhone}
+            />
           )}
         </div>
       </div>

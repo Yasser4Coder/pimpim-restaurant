@@ -64,6 +64,7 @@ const Settings = () => {
       email: "info@deliciousbites.com",
       website: "www.deliciousbites.com",
       address: "123 Culinary Street, Food District, City 12345",
+      supportPhone: "",
     },
 
     // Operating Hours
@@ -733,6 +734,24 @@ const Settings = () => {
                           value={restaurantSettings.contact.phone}
                           onChange={handleInputChange("contact", "phone")}
                           className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="support-phone">
+                        Support Phone (Help Number)
+                      </Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="support-phone"
+                          value={restaurantSettings.contact.supportPhone || ""}
+                          onChange={handleInputChange(
+                            "contact",
+                            "supportPhone"
+                          )}
+                          className="pl-10"
+                          placeholder="Enter support/help phone number"
                         />
                       </div>
                     </div>

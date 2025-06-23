@@ -15,6 +15,67 @@ import orderApi from "../../api/orderApi";
 import userApi from "../../api/userApi";
 import { toast } from "react-hot-toast";
 import socket from "../../services/socket";
+import * as XLSX from "xlsx";
+
+const DeleteAllOrdersDialog = ({ isOpen, onClose, onConfirm, isDeleting }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      />
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+          <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div className="sm:flex sm:items-start">
+              <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                <h3 className="text-lg font-semibold leading-6 text-gray-900">
+                  Delete All Orders
+                </h3>
+                <div className="mt-2">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete{" "}
+                    <span className="font-bold">ALL orders</span>? This action
+                    cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <Button
+              variant="destructive"
+              onClick={onConfirm}
+              className="w-full sm:w-auto sm:ml-3 bg-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete All Orders"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="mt-3 w-full sm:mt-0 sm:w-auto"
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -25,6 +86,9 @@ const OrderManagement = () => {
   const [orderStats, setOrderStats] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [seenOrders, setSeenOrders] = useState(new Set());
+  const [exporting, setExporting] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const statusOptions = [
     "All",
@@ -213,6 +277,55 @@ const OrderManagement = () => {
     return /^[a-fA-F0-9]{24}$/.test(id);
   }
 
+  const exportToExcel = () => {
+    setExporting(true);
+    try {
+      // Prepare data for Excel
+      const data = orders.map((order) => ({
+        OrderNumber: order.orderNumber,
+        Customer: order.customer?.name,
+        Phone: order.customer?.phone,
+        Address: order.customer?.address,
+        Status: order.status,
+        Total: order.total,
+        Items: order.items
+          .map((item) => `${item.quantity}x ${item.name}`)
+          .join(", "),
+        DeliveryGuy: order.deliveryGuy?.fullName || "",
+        OrderTime: order.orderTime
+          ? new Date(order.orderTime).toLocaleString()
+          : "",
+        Notes: order.notes || "",
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Orders");
+      XLSX.writeFile(
+        wb,
+        `orders_${new Date().toISOString().slice(0, 10)}.xlsx`
+      );
+    } catch (err) {
+      toast.error("Failed to export orders");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const deleteAllOrders = async () => {
+    setDeletingAll(true);
+    try {
+      await orderApi.deleteAll();
+      toast.success("All orders deleted successfully");
+      fetchOrders();
+      fetchOrderStats();
+      setShowDeleteDialog(false);
+    } catch (err) {
+      toast.error("Failed to delete all orders");
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -244,12 +357,42 @@ const OrderManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* Attention Alert for Storage Issues */}
+      <div className="flex items-center p-4 mb-2 rounded-lg bg-yellow-50 border border-yellow-200">
+        <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3 flex-shrink-0" />
+        <div className="text-yellow-900 text-sm">
+          <span className="font-semibold">Attention:</span> For storage reasons,
+          if your orders reach <span className="font-bold">100 - 300</span>, you
+          should delete all orders to avoid issues. You can export them first to
+          save a backup.
+        </div>
+      </div>
+      <DeleteAllOrdersDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={deleteAllOrders}
+        isDeleting={deletingAll}
+      />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
           <p className="text-gray-600">Track and manage customer orders</p>
         </div>
         <div className="flex space-x-2">
+          <Button
+            onClick={exportToExcel}
+            disabled={exporting || orders.length === 0}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {exporting ? "Exporting..." : "Export Orders to Excel"}
+          </Button>
+          <Button
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={deletingAll || orders.length === 0}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Delete All Orders
+          </Button>
           <input
             type="text"
             value={searchQuery}

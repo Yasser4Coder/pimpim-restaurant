@@ -169,10 +169,10 @@ const OrderFormModal = ({
             />
           </div>
 
-          {/* Delivery Instructions */}
+          {/* Options supplémentaires */}
           <div>
             <label className="block text-white font-semibold mb-2">
-              Instructions de Livraison (Optionnel)
+              Options supplémentaires
             </label>
             <textarea
               name="deliveryInstructions"
@@ -180,32 +180,8 @@ const OrderFormModal = ({
               onChange={onFormChange}
               rows="2"
               className="w-full bg-white/20 text-white border border-white/30 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
-              placeholder="Des instructions spéciales pour la livraison ?"
+              placeholder="Des options ou demandes spéciales ?"
             />
-          </div>
-
-          {/* Payment Method */}
-          <div>
-            <label className="block text-white font-semibold mb-2 flex items-center">
-              <FaCreditCard className="mr-2" />
-              Méthode de Paiement
-            </label>
-            <select
-              name="paymentMethod"
-              value={orderForm.paymentMethod}
-              onChange={onFormChange}
-              className="w-full bg-white/20 text-white border border-white/30 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            >
-              <option value="cash" className="bg-gray-800">
-                Paiement à la Livraison
-              </option>
-              <option value="card" className="bg-gray-800">
-                Carte de Crédit/Débit
-              </option>
-              <option value="mobile" className="bg-gray-800">
-                Paiement Mobile
-              </option>
-            </select>
           </div>
 
           {/* Order Summary */}
@@ -275,7 +251,13 @@ const OrderFormModal = ({
 
 // Order Success Modal
 const OrderSuccessModal = ({ show, onClose, order }) => {
+  const navigate = useNavigate();
   if (!show || !order) return null;
+
+  const handleTrackOrder = () => {
+    const orderNumber = order.displayOrderNumber?.replace(/^#/, "");
+    navigate(`/track/${orderNumber}`);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -318,10 +300,10 @@ const OrderSuccessModal = ({ show, onClose, order }) => {
 
         {/* Action Button */}
         <button
-          onClick={onClose}
+          onClick={handleTrackOrder}
           className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
         >
-          Continuer les Achats
+          Suivre ma Commande
         </button>
       </div>
     </div>
@@ -341,6 +323,7 @@ const Cart = () => {
   const [restaurantStatus, setRestaurantStatus] = useState({
     isOpen: true,
     name: "PimPim",
+    supportPhone: "",
   });
 
   // Order form state
@@ -360,6 +343,7 @@ const Cart = () => {
         setRestaurantStatus({
           isOpen: response.data.isOpen,
           name: response.data.name || "PimPim",
+          supportPhone: response.data.contact?.supportPhone || "",
         });
       } catch (error) {
         console.error("Error fetching restaurant status:", error);
@@ -719,12 +703,18 @@ const Cart = () => {
                 <p className="text-gray-300 text-sm mb-3">
                   Des difficultés ? Appelez-nous pour le support :
                 </p>
-                <a
-                  href="tel:0666554488"
-                  className="block text-white text-lg font-bold tracking-widest hover:text-blue-300 transition-colors duration-300"
-                >
-                  📞 06 66 55 44 88
-                </a>
+                {restaurantStatus.supportPhone ? (
+                  <a
+                    href={`tel:${restaurantStatus.supportPhone}`}
+                    className="block text-white text-lg font-bold tracking-widest hover:text-blue-300 transition-colors duration-300"
+                  >
+                    📞 {restaurantStatus.supportPhone}
+                  </a>
+                ) : (
+                  <span className="block text-white text-lg font-bold tracking-widest">
+                    Numéro non disponible
+                  </span>
+                )}
               </div>
             </div>
           </div>
