@@ -323,6 +323,7 @@ const MenuManagement = () => {
     price: "",
     category: "",
     image: null,
+    rating: "",
   });
 
   const [categories, setCategories] = useState([]);
@@ -437,6 +438,13 @@ const MenuManagement = () => {
       }
     }
 
+    // Validate rating
+    const ratingValue = parseFloat(formData.rating);
+    if (isNaN(ratingValue) || ratingValue < 0 || ratingValue > 5) {
+      toast.error("Rating must be a number between 0 and 5.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const formDataToSend = new FormData();
@@ -445,6 +453,7 @@ const MenuManagement = () => {
       formDataToSend.append("price", formData.price);
       formDataToSend.append("category", formData.category);
       formDataToSend.append("available", "true");
+      formDataToSend.append("rating", ratingValue);
       if (formData.image) {
         formDataToSend.append("image", formData.image);
       }
@@ -477,6 +486,7 @@ const MenuManagement = () => {
       price: item.price.toString(),
       category: item.category,
       image: null,
+      rating: item.rating !== undefined ? item.rating.toString() : "",
     });
     setShowAddForm(true);
   };
@@ -524,6 +534,7 @@ const MenuManagement = () => {
       price: "",
       category: "",
       image: null,
+      rating: "",
     });
     setShowAddForm(false);
     setEditingItem(null);
@@ -631,6 +642,21 @@ const MenuManagement = () => {
                     value={formData.price}
                     onChange={(e) =>
                       setFormData({ ...formData, price: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="rating">Rating (0-5)</Label>
+                  <Input
+                    id="rating"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="5"
+                    value={formData.rating}
+                    onChange={(e) =>
+                      setFormData({ ...formData, rating: e.target.value })
                     }
                     required
                   />
